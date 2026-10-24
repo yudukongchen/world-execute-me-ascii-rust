@@ -216,6 +216,12 @@ struct TerminalGuard {
 
 impl TerminalGuard {
     fn new() -> Result<Self, String> {
+        // Frames are written as raw ANSI, bypassing crossterm's command API.
+        // On Windows this also enables VT processing in the console host.
+        #[cfg(windows)]
+        if !crossterm::ansi_support::supports_ansi() {
+            return Err("终端不支持 ANSI 控制序列，请使用支持 ANSI 的 Windows 终端。".into());
+        }
         crossterm::terminal::enable_raw_mode().map_err(|e| format!("无法进入终端原始模式：{e}"))?;
         Ok(TerminalGuard { active: true })
     }
